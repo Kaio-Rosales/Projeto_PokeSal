@@ -22,3 +22,22 @@ Requisitos adicionais:
     3.3. Os terrenos eram aleatórios, sendo eles "Quente", "Molhado" e "Florido", cada um com suas peculiaridades. Era possível não pegar nenhum.
 
 ![Diagrama de caso de uso](assets/imagens/PokesalUseCase.png)
+
+## Fase 2
+Checklist de Teste Estático de Código (Revisão Manual):
+1. Variáveis inicializadas antes do uso? \
+    As variáveis inicializadas antes do uso seriam a matriz localização, usada como "mapa" para movimentação do jogador, as variáveis  escolha e caminho também usadas para movimentação, porém na modificações de valores na matriz e uma menção extra seria para os atributos dos PokeSals que tem valores base.
+2. Variáveis/métodos declarados e nunca usados? \
+    Os setters setHpMax, setDef e setSpd em *ChikoSal, CyndaSal e TotoSal*, acabaram não sendo utilizados.
+3. Código inacessível? \
+    Não encontrei códigos inacessíveis.
+4. Código duplicado? \
+    *ChikoSal, CyndaSal, TotoSal* são parecidos, uma possível herança de uma falta de planejamento e os métodos avancarMovimento() e retornarMovimento() da classe *Servicos* repetem o mesmo loop para percorrer a matriz.
+5. Erros de sintaxe? \
+    Não encontrei problema ao compilar o código.
+6. Erros de lógica que quebram regras do negócio?\
+    Ao usar a opção "Usar Itens" no menu da classe *Main* é possível notar que os itens não são empilhados de maneira totalmente correta.
+7. Erros de tipagem? \
+    Não encontrei erro de tipagem.
+8. Fluxo de controle válido (sem loops infinitos/condições impossíveis)? \
+    Não encontrei falhas em loops que tornem o fluxo infinito.
