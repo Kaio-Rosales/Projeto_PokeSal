@@ -1,12 +1,13 @@
 package servicos;
 
+import aleatorio.GeradorAleatorio;
+import batalha.MecanicaCombate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.Objects;
 import java.util.Scanner;
+import model.elementos.EfeitoTerreno;
 import model.elementos.StatusEfeito;
-import model.elementos.Terrenos;
-import model.elementos.TipoElemental;
 import model.itens.Antidote;
 import model.itens.Cloak;
 import model.itens.Item;
@@ -23,29 +24,49 @@ import model.pokesal.ChikoSal;
 import model.pokesal.CyndaSal;
 import model.pokesal.PokeSal;
 import model.pokesal.TotoSal;
+import registro.RegistroBatalha;
+import terreno.ServicoTerreno;
 
-/** Quarda todos os serviços do sistema.*/
+/**
+ * Serviços do jogo que dependem do jogador: menu de batalha selvagem, itens, mapa e eventos.
+ *
+ * <p>FASE 03: esta classe continua sendo a "casca" de console do jogo (lê o teclado e imprime
+ * menus), mas deixou de decidir regras de combate e de criar suas próprias dependências. Todos os
+ * colaboradores chegam pelo construtor (Inversão de Dependência):
+ * <ul>
+ *   <li>{@code MecanicaCombate}: ataque, dano, status e terreno (antes estavam aqui dentro);</li>
+ *   <li>{@code ServicoTerreno}: efeito de terreno por clima e horário (antes: {@code Terrenos}
+ *       estático);</li>
+ *   <li>{@code GeradorAleatorio}: toda a sorte do mapa (antes: um Random criado aqui dentro);</li>
+ *   <li>{@code RegistroBatalha}: eventos de uso de item na batalha.</li>
+ * </ul>
+ */
 public class Servicos {
   private Jogador jogador;
   private int[][] localizacao = {{0, 0, 0}, {0, 0, 0}, {0}};
   private PokeSal oponente;
   private int escolha = -1;
   private int caminho = 0;
+  private EfeitoTerreno efeitoTerrenoAtual = EfeitoTerreno.NENHUM;
   private final Scanner scanner;
-  private Random random = new Random();
+  private final MecanicaCombate mecanica;
+  private final ServicoTerreno servicoTerreno;
+  private final GeradorAleatorio gerador;
+  private final RegistroBatalha registro;
   private static final int LIMITE_ITENS_POR_BATALHA = 2;
 
-  /** Construtor padrão, cria seu próprio Scanner de leitura do console.*/
-  public Servicos() {
-    this.scanner = new Scanner(System.in);
-  }
-
   /**
-   * Construtor que recebe o jogador já instanciado e um Scanner compartilhado com a Main,
-   * evitando fechar o System.in mais de uma vez durante a execução.*/
-  public Servicos(Jogador jogador, Scanner scanner) {
+   * Recebe o jogador, um Scanner compartilhado com a Main (evita fechar o System.in mais de uma
+   * vez) e os colaboradores externos. Substitui os construtores antigos, que criavam o próprio
+   * Scanner e o próprio Random.*/
+  public Servicos(Jogador jogador, Scanner scanner, MecanicaCombate mecanica,
+      ServicoTerreno servicoTerreno, GeradorAleatorio gerador, RegistroBatalha registro) {
     this.jogador = jogador;
-    this.scanner = scanner;
+    this.scanner = Objects.requireNonNull(scanner, "scanner");
+    this.mecanica = Objects.requireNonNull(mecanica, "mecanica");
+    this.servicoTerreno = Objects.requireNonNull(servicoTerreno, "servicoTerreno");
+    this.gerador = Objects.requireNonNull(gerador, "gerador");
+    this.registro = Objects.requireNonNull(registro, "registro");
   }
 
   public Jogador getJogador() {
@@ -54,13 +75,6 @@ public class Servicos {
 
   public void setJogador(Jogador jogador) {
     this.jogador = jogador;
-  }
-
-  /**
-   * Permite injetar um gerador de números aleatórios determinístico (ex.: em testes) no lugar do
-   * Random padrão. Pacote-privado: não faz parte da API pública do jogo.*/
-  void setRandom(Random random) {
-    this.random = random;
   }
 
   /**
@@ -75,6 +89,11 @@ public class Servicos {
    * API pública do jogo.*/
   PokeSal getOponente() {
     return oponente;
+  }
+
+  /** Efeito de terreno sorteado no último evento do mapa. Pacote-privado: usado em testes.*/
+  EfeitoTerreno getEfeitoTerrenoAtual() {
+    return efeitoTerrenoAtual;
   }
 
   /** Fecha o Scanner utilizado pelos serviços. Deve ser chamado apenas ao encerrar o sistema.*/
@@ -113,6 +132,7 @@ public class Servicos {
 
     int itensUsados = 0;
     boolean fugiu = false;
+    EfeitoTerreno terreno = efeitoTerrenoAtual;
 
     while (meuPokeSal.estaVivo() && oponente.estaVivo() && !fugiu) {
       exibirStatusBatalha(meuPokeSal, oponente);
@@ -150,31 +170,31 @@ public class Servicos {
       if (usouItem) {
         // Usar item dá prioridade de turno ao treinador; o oponente ataca em seguida.
         if (oponente.estaVivo()) {
-          executarAtaqueIa(oponente, meuPokeSal);
+          executarAtaqueIa(oponente, meuPokeSal, terreno);
         }
-      } else if (atacaPrimeiro(meuPokeSal, oponente)) {
-        executarAtaque(meuPokeSal, oponente, ataqueEscolhido);
+      } else if (mecanica.atacaPrimeiro(meuPokeSal, oponente)) {
+        mecanica.executarAtaque(meuPokeSal, oponente, ataqueEscolhido, terreno);
         if (oponente.estaVivo()) {
-          executarAtaqueIa(oponente, meuPokeSal);
+          executarAtaqueIa(oponente, meuPokeSal, terreno);
         }
       } else {
-        executarAtaqueIa(oponente, meuPokeSal);
+        executarAtaqueIa(oponente, meuPokeSal, terreno);
         if (meuPokeSal.estaVivo()) {
-          executarAtaque(meuPokeSal, oponente, ataqueEscolhido);
+          mecanica.executarAtaque(meuPokeSal, oponente, ataqueEscolhido, terreno);
         }
       }
 
       if (meuPokeSal.estaVivo()) {
-        aplicarStatusFimDeTurno(meuPokeSal);
+        mecanica.aplicarStatusFimDeTurno(meuPokeSal);
       }
       if (oponente.estaVivo()) {
-        aplicarStatusFimDeTurno(oponente);
+        mecanica.aplicarStatusFimDeTurno(oponente);
       }
       if (meuPokeSal.estaVivo()) {
-        Terrenos.curaFimDeTurno(meuPokeSal);
+        mecanica.aplicarTerrenoFimDeTurno(meuPokeSal, terreno);
       }
       if (oponente.estaVivo()) {
-        Terrenos.curaFimDeTurno(oponente);
+        mecanica.aplicarTerrenoFimDeTurno(oponente, terreno);
       }
     }
 
@@ -199,24 +219,12 @@ public class Servicos {
     oponente.setStatus(StatusEfeito.NENHUM);
   }
 
-  /**
-   * Determina se o PokeSal do jogador age antes do oponente, com base na velocidade efetiva
-   * (já considerando a penalidade de Paralisado). Em caso de empate, o jogador age primeiro.*/
-  public boolean atacaPrimeiro(PokeSal meuPokeSal, PokeSal oponentePokeSal) {
-    return meuPokeSal.getSpdEfetivo() >= oponentePokeSal.getSpdEfetivo();
-  }
-
   /** Escolhe o primeiro PokeSal do time do jogador que ainda esteja apto a batalhar.*/
   private PokeSal escolherPokeSalParaBatalha() {
     if (jogador == null) {
       return null;
     }
-    for (PokeSal candidato : jogador.getTime()) {
-      if (candidato.estaVivo()) {
-        return candidato;
-      }
-    }
-    return null;
+    return jogador.getPrimeiroPokeSalVivo();
   }
 
   /** Imprime o HP e o status atual dos dois PokeSals em batalha.*/
@@ -260,93 +268,9 @@ public class Servicos {
     return disponiveis.get(opcao - 1);
   }
 
-  /**
-   * Executa um ataque de um PokeSal contra outro, aplicando vantagem elemental e terreno.
-   * Aplica o dano, verifica desmaio e sorteia a chance de aplicar o status do golpe.*/
-  private void executarAtaque(PokeSal atacante, PokeSal alvo, Ataque ataque) {
-    if (atacante.getStatus() == StatusEfeito.RESFRIADO) {
-      System.out.println(atacante.getClass().getSimpleName()
-          + " está resfriado e não conseguiu agir!");
-      return;
-    }
-
-    TipoElemental tipoGolpe = ataque.getTipo();
-    double efetividade = tipoGolpe.danoElemental(tipoGolpe, alvo.getElemento());
-    int dano = calcularDano(atacante, alvo, ataque);
-
-    int hpRestante = Math.max(0, alvo.getHpAtual() - dano);
-    alvo.setHpAtual(hpRestante);
-
-    System.out.println(atacante.getClass().getSimpleName() + " usou " + ataque.getNome() + "!");
-    if (efetividade > 1.0) {
-      System.out.println("É super efetivo!");
-    } else if (efetividade < 1.0) {
-      System.out.println("Não é muito efetivo...");
-    }
-    System.out.println(alvo.getClass().getSimpleName() + " sofreu " + dano + " de dano! (HP: "
-        + hpRestante + "/" + alvo.getHpMax() + ")");
-
-    if (hpRestante <= 0) {
-      System.out.println(alvo.getClass().getSimpleName() + " desmaiou!");
-      return;
-    }
-
-    if (ataque.getEfeito() != StatusEfeito.NENHUM && alvo.getStatus() == StatusEfeito.NENHUM) {
-      int sorteio = random.nextInt(100);
-      if (sorteio < ataque.getChanceEfeito()) {
-        alvo.setStatus(ataque.getEfeito());
-        System.out.println(alvo.getClass().getSimpleName() + " foi afetado por "
-            + ataque.getEfeito() + "!");
-      }
-    }
-  }
-
-  /**
-   * Calcula o dano final de um ataque.*/
-  public int calcularDano(PokeSal atacante, PokeSal alvo, Ataque ataque) {
-    TipoElemental tipoGolpe = ataque.getTipo();
-    double efetividade = tipoGolpe.danoElemental(tipoGolpe, alvo.getElemento());
-    double multiplicadorTerreno = Terrenos.multiplicadorDano(tipoGolpe);
-    int danoBruto = ataque.calcularDano(atacante.getAtkEfetivo());
-    int danoComBonus = (int) Math.round(danoBruto * efetividade * multiplicadorTerreno);
-    return Math.max(1, danoComBonus - (alvo.getDef() / 10));
-  }
-
-  /** Escolhe um ataque aleatório entre os disponíveis e o executa. Usado pelo oponente.*/
-  private void executarAtaqueIa(PokeSal atacante, PokeSal alvo) {
-    List<Ataque> disponiveis = atacante.ataques();
-    Ataque escolhido = disponiveis.get(random.nextInt(disponiveis.size()));
-    executarAtaque(atacante, alvo, escolhido);
-  }
-
-  /**
-   * Aplica dano ou cura de status ao final do turno (Queimado, Envenenado, Resfriado).
-   * Paralisado apenas reduz a velocidade efetiva e não causa dano por turno.*/
-  private void aplicarStatusFimDeTurno(PokeSal pokeSal) {
-    switch (pokeSal.getStatus()) {
-      case QUEIMADO:
-        int danoQueimado = Math.max(1, pokeSal.getHpMax() * 2 / 100);
-        pokeSal.setHpAtual(Math.max(0, pokeSal.getHpAtual() - danoQueimado));
-        System.out.println(pokeSal.getClass().getSimpleName() + " sofreu " + danoQueimado
-            + " de dano pela queimadura!");
-        break;
-      case ENVENENADO:
-        int danoVeneno = Math.max(1, pokeSal.getHpMax() * 5 / 100);
-        pokeSal.setHpAtual(Math.max(0, pokeSal.getHpAtual() - danoVeneno));
-        System.out.println(pokeSal.getClass().getSimpleName() + " sofreu " + danoVeneno
-            + " de dano pelo veneno!");
-        break;
-      case RESFRIADO:
-        if (random.nextInt(100) < 50) {
-          pokeSal.setStatus(StatusEfeito.NENHUM);
-          System.out.println(pokeSal.getClass().getSimpleName() + " não está mais resfriado!");
-        }
-        break;
-      case PARALISADO:
-      case NENHUM:
-      default:
-        break;
-    }
+  /** O oponente escolhe um golpe aleatório (sorteio da mecânica) e o executa.*/
+  private void executarAtaqueIa(PokeSal atacante, PokeSal alvo, EfeitoTerreno terreno) {
+    mecanica.executarAtaque(atacante, alvo, mecanica.escolherAtaqueIa(atacante), terreno);
   }
 
   /**
@@ -384,6 +308,7 @@ public class Servicos {
     } else if (escolhido instanceof ItemStatus) {
       ((ItemStatus) escolhido).usar(alvo);
     }
+    registro.registrarUsoItem(escolhido, alvo);
     return true;
   }
 
@@ -467,39 +392,30 @@ public class Servicos {
     return scanner.nextInt();
   }
 
-  /** Método que determina os eventos aleatórios.*/
+  /**
+   * Método que determina os eventos aleatórios: primeiro consulta o terreno (clima e horário) e
+   * depois sorteia entre achar um item ou enfrentar um PokeSal selvagem.*/
   public void eventosAleatorios() {
-    int terreno = random.nextInt(4);
-    Terrenos.limparTerrenos();
-    Terrenos.validarTerrenos(terreno);
-    int evento = random.nextInt(2);
+    efeitoTerrenoAtual = servicoTerreno.obterEfeitoAtual();
+    if (!efeitoTerrenoAtual.getMensagem().isEmpty()) {
+      System.out.println(efeitoTerrenoAtual.getMensagem());
+    }
+    int evento = gerador.proximoInt(2);
 
     if (evento == 0) {
-      boolean existe = false;
-      Item itemEncontrado = sortearItem(random.nextInt(7));
-      List<Item> mochila = jogador.getMochila();
-
-      for (Item item : mochila) {
-        if (item.equals(itemEncontrado)) {
-          item.setQuantidade(item.getQuantidade() + 1);
-          existe = true;
-          break;
-        }
-      }
-      if (existe == false) {
-        itemEncontrado.setQuantidade(1);
-        mochila.add(itemEncontrado);
-      }
+      Item itemEncontrado = sortearItem(gerador.proximoInt(7));
+      itemEncontrado.setQuantidade(1);
+      jogador.adicionarItem(itemEncontrado);
       System.out.println("Você encontrou: " + itemEncontrado.getNome());
-    } else if (evento == 1) {
-      int pokesal = random.nextInt(3);
-      int nivel = random.nextInt(10);
-      if (pokesal == 0) {
-        oponente = new ChikoSal(nivel + 1);
-      } else if (pokesal == 1) {
-        oponente = new TotoSal(nivel + 1);
+    } else {
+      int especie = gerador.proximoInt(3);
+      int nivel = gerador.proximoInt(10) + 1;
+      if (especie == 0) {
+        oponente = new ChikoSal(nivel);
+      } else if (especie == 1) {
+        oponente = new TotoSal(nivel);
       } else {
-        oponente = new CyndaSal(nivel + 1);
+        oponente = new CyndaSal(nivel);
       }
       batalha(oponente);
     }
@@ -559,6 +475,7 @@ public class Servicos {
         eventosAleatorios();
       } else {
         System.out.println("Escolha inválida");
+        escolha = -1; // BUG-02: sem isto, o próximo "Avançar" estourava ArrayIndexOutOfBounds
       }
     } else {
       caminho++;

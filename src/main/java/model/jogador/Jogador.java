@@ -3,6 +3,7 @@ package model.jogador;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import model.elementos.StatusEfeito;
 import model.itens.Item;
 import model.pokesal.PokeSal;
 
@@ -42,5 +43,47 @@ public class Jogador {
 
   public void setMochila(List<Item> mochila) {
     this.mochila = mochila;
+  }
+
+  /**
+   * FASE 03: primeiro PokeSal do time que ainda pode lutar, ou {@code null} se todos desmaiaram.
+   * Antes essa busca existia só dentro de {@code Servicos}; agora a batalha entre treinadores
+   * também precisa dela, então ela vive na entidade que possui o time.*/
+  public PokeSal getPrimeiroPokeSalVivo() {
+    for (PokeSal candidato : time) {
+      if (candidato != null && candidato.estaVivo()) {
+        return candidato;
+      }
+    }
+    return null;
+  }
+
+  /** FASE 03: indica se ainda existe algum PokeSal apto a lutar no time.*/
+  public boolean possuiPokeSalVivo() {
+    return getPrimeiroPokeSalVivo() != null;
+  }
+
+  /** FASE 03: devolve HP máximo e remove status de todo o time (usado entre rodadas do torneio).*/
+  public void curarTime() {
+    for (PokeSal pokeSal : time) {
+      if (pokeSal != null) {
+        pokeSal.setHpAtual(pokeSal.getHpMax());
+        pokeSal.setStatus(StatusEfeito.NENHUM);
+      }
+    }
+  }
+
+  /**
+   * FASE 03: guarda o item na mochila, somando a quantidade se já existir um item com o mesmo
+   * nome. CORRIGE o BUG-01 (ver docs): a versão antiga comparava com {@code equals()}, que nunca
+   * era verdadeiro entre objetos diferentes, e por isso itens iguais nunca se empilhavam.*/
+  public void adicionarItem(Item novo) {
+    for (Item existente : mochila) {
+      if (existente.getNome().equals(novo.getNome())) {
+        existente.setQuantidade(existente.getQuantidade() + novo.getQuantidade());
+        return;
+      }
+    }
+    mochila.add(novo);
   }
 }
