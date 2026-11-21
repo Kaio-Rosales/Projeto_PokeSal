@@ -23,6 +23,8 @@ Requisitos adicionais:
 
 ![Diagrama de caso de uso](assets/imagens/PokesalUseCase.png)
 
+---
+
 ## Fase 2
 Checklist de Teste Estático de Código (Revisão Manual):
 1. Variáveis inicializadas antes do uso? \
@@ -41,3 +43,21 @@ Checklist de Teste Estático de Código (Revisão Manual):
     Não encontrei erro de tipagem.
 8. Fluxo de controle válido (sem loops infinitos/condições impossíveis)? \
     Não encontrei falhas em loops que tornem o fluxo infinito.
+
+---
+
+## Fase 3
+Evolução da Fase 02 para suportar **precisão e acerto crítico**, **terreno por clima e horário**, **torneio eliminatório**, **registro de batalha** e **repositório de resultados**, com o código estruturado para ser **testável com Mockito**.
+
+Na Fase 02 a classe `Servicos` fazia tudo: lia o teclado, desenhava o mapa, sorteava eventos e calculava o combate. Ela criava seus próprios `Random` e `Scanner` e lia um terreno guardado em variáveis `static`. Por isso era impossível testar de forma previsível qualquer coisa que dependesse de sorte, clima ou horário. O combate saiu de `Servicos` e foi para `MecanicaCombate`, usada tanto pela batalha selvagem quanto pelo torneio.
+
+**Foram adicionadas as regras novas**: precisão, crítico, terreno dinâmico, batalha entre treinadores, torneio, ranking e premiação.
+
+**Requisitos autorais**
+1. **Ranking de treinadores**: 3 pontos por vitória, +1 por vitória relâmpago (até 6 turnos); desempate por vitórias, menos turnos e nome;
+2. **Premiação do campeão**: itens na mochila (4 treinadores: Super Poção + Antídoto; 8 treinadores: 2 Mega Poções + Super Poção + Passe de Retorno) e uma notificação.
+
+**Bugs corrigidos**
+1. Itens iguais nunca empilhavam na mochila (a comparação usava `equals` de objetos) | Correção: `Jogador.adicionarItem` compara por nome e soma a quantidade;
+2. Digitar uma opção inválida no mapa e avançar derrubava o jogo (`ArrayIndexOutOfBoundsException`) | Correção: Estado volta a `-1` no ramo inválido;
+3. Adversário podia ter o mesmo nome do jogador e o ranking misturava os dois (código novo da Fase 03) | Correção: Nomes únicos; `Torneio` rejeita nomes repetidos
