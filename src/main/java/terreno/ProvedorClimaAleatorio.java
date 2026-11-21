@@ -1,7 +1,7 @@
 package terreno;
 
-import java.util.Objects;
 import aleatorio.GeradorAleatorio;
+import java.util.Objects;
 import model.elementos.Clima;
 
 /**

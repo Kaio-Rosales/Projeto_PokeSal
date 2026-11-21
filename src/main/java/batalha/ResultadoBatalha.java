@@ -10,7 +10,7 @@ import model.pokesal.PokeSal;
  * Registro imutável do desfecho de uma batalha entre treinadores: é o que o
  * {@link RepositorioResultados} guarda.
  */
-public class ResultadoBatalha{
+public class ResultadoBatalha {
 
   private final Jogador vencedor;
   private final Jogador perdedor;

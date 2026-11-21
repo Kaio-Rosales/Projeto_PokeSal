@@ -124,7 +124,7 @@ public class Batalha {
   }
 
   /** Executa turnos até a batalha terminar e devolve o resultado. */
-  public ResultadoBatalha executarAteOFim() {
+  public ResultadoBatalha executarAteFim() {
     while (!terminou()) {
       executarTurno();
     }
@@ -213,9 +213,9 @@ public class Batalha {
   }
 
   private void verificarFim() {
-    boolean aVivo = ladoA.treinador.possuiPokeSalVivo();
-    boolean bVivo = ladoB.treinador.possuiPokeSalVivo();
-    if (aVivo && bVivo) {
+    boolean treinadorA = ladoA.treinador.possuiPokeSalVivo();
+    boolean treinadorB = ladoB.treinador.possuiPokeSalVivo();
+    if (treinadorA && treinadorB) {
       if (turnos >= limiteTurnos) {
         // Tempo esgotado: vence quem tiver mais HP somado no time (empate: treinador A).
         finalizar(ladoA.hpTotal() >= ladoB.hpTotal() ? ladoA : ladoB);
@@ -223,7 +223,7 @@ public class Batalha {
       return;
     }
     // Só A vivo -> A. Só B vivo -> B. Ambos desmaiaram no mesmo turno -> A (cabeça de chave).
-    finalizar(aVivo || !bVivo ? ladoA : ladoB);
+    finalizar(treinadorA || !treinadorB ? ladoA : ladoB);
   }
 
   private void finalizar(Lado vencedor) {

@@ -1,5 +1,8 @@
 package servicos;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doReturn;
+
 import aleatorio.GeradorAleatorio;
 import batalha.MecanicaCombate;
 import java.io.ByteArrayOutputStream;
@@ -18,9 +21,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import registro.RegistroBatalha;
 import terreno.ServicoTerreno;
-
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doReturn;
 
 /**
  * Base dos testes de {@code Servicos}: monta os colaboradores mockados, simula o TECLADO com um

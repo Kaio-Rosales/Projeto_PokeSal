@@ -201,7 +201,7 @@ class BatalhaTest {
     assertSame(vencedorEsperado, salvo.getVencedor());
     assertSame(perdedorEsperado, salvo.getPerdedor());
     assertEquals(2, salvo.getTurnos());
-    ResultadoBatalha devolvido = novaBatalha(vencedorEsperado, perdedorEsperado).executarAteOFim();
+    ResultadoBatalha devolvido = novaBatalha(vencedorEsperado, perdedorEsperado).executarAteFim();
     assertEquals(Arrays.<PokeSal>asList(cynda), salvo.getPokesalUtilizadosVencedor());
     assertEquals(Arrays.<PokeSal>asList(chiko), salvo.getPokesalUtilizadosPerdedor());
     assertSame(salvo, devolvido, "O resultado salvo é o mesmo que a batalha devolve");
@@ -219,7 +219,7 @@ class BatalhaTest {
     Jogador perdedorEsperado = treinador("Bruno", new ChikoSal(1));
 
     Batalha batalha = novaBatalha(vencedorEsperado, perdedorEsperado);
-    ResultadoBatalha resultado = batalha.executarAteOFim();   // não pode lançar exceção
+    ResultadoBatalha resultado = batalha.executarAteFim();   // não pode lançar exceção
 
     assertTrue(batalha.terminou());
     assertSame(vencedorEsperado, resultado.getVencedor(), "O vencedor continua definido");
@@ -253,7 +253,7 @@ class BatalhaTest {
     Batalha batalha = novaBatalha(treinador("Ana", new CyndaSal(10)),
         treinador("Bruno", new ChikoSal(1)));
 
-    batalha.executarAteOFim();    // 2 turnos
+    batalha.executarAteFim();    // 2 turnos
 
     verify(registro, times(1)).registrarInicioBatalha("Ana", "Bruno");
   }
@@ -264,7 +264,7 @@ class BatalhaTest {
     sorteioSemSurpresas();
     terrenoNormal();
 
-    novaBatalha(treinador("Ana", cynda), treinador("Bruno", new ChikoSal(1))).executarAteOFim();
+    novaBatalha(treinador("Ana", cynda), treinador("Bruno", new ChikoSal(1))).executarAteFim();
 
     verify(servicoTerreno, times(1)).obterEfeitoAtual(); // 2 turnos, 1 consulta: terreno estável
   }
@@ -280,7 +280,7 @@ class BatalhaTest {
     terrenoNormal();
 
     ResultadoBatalha resultado = novaBatalha(treinador("Ana", cynda),
-        treinador("Bruno", primeiro, segundo)).executarAteOFim();
+        treinador("Bruno", primeiro, segundo)).executarAteFim();
 
     assertEquals(4, resultado.getTurnos(), "2 golpes para cada Chiko");
     assertEquals(Arrays.<PokeSal>asList(primeiro, segundo),
@@ -297,7 +297,7 @@ class BatalhaTest {
     Jogador bruno = treinador("Bruno", new TotoSal(10));   // termina o turno 1 com 28 HP
 
     ResultadoBatalha resultado = new Batalha(ana, bruno, mecanica, servicoTerreno, repositorio,
-        registro, 1).executarAteOFim();
+        registro, 1).executarAteFim();
 
     assertSame(ana, resultado.getVencedor());
     assertEquals(1, resultado.getTurnos());
@@ -311,7 +311,7 @@ class BatalhaTest {
     Jogador ana = treinador("Ana", new ChikoSal(10));
 
     ResultadoBatalha resultado = new Batalha(bruno, ana, mecanica, servicoTerreno, repositorio,
-        registro, 1).executarAteOFim();
+        registro, 1).executarAteFim();
 
     assertSame(ana, resultado.getVencedor(), "Ana (2º argumento) termina com mais HP");
   }
@@ -329,7 +329,7 @@ class BatalhaTest {
     sorteioSemSurpresas();
     terrenoNormal();
 
-    ResultadoBatalha resultado = novaBatalha(ana, bruno).executarAteOFim();
+    ResultadoBatalha resultado = novaBatalha(ana, bruno).executarAteFim();
 
     assertFalse(envenenada.estaVivo());
     assertFalse(frageil.estaVivo());
@@ -359,7 +359,7 @@ class BatalhaTest {
     sorteioSemSurpresas();
     terrenoNormal();
 
-    ResultadoBatalha resultado = novaBatalha(ana, bruno).executarAteOFim();
+    ResultadoBatalha resultado = novaBatalha(ana, bruno).executarAteFim();
 
     assertSame(bruno, resultado.getVencedor(), "Sem poções extras, Ana acaba derrotada");
     assertEquals(3, pocoes.getQuantidade(), "Das 5 poções, só 2 podem ser usadas por batalha");
@@ -379,7 +379,7 @@ class BatalhaTest {
     sorteioSemSurpresas();
     terrenoNormal();
 
-    novaBatalha(ana, treinador("Bruno", chikoDeDanoMinimo())).executarAteOFim();
+    novaBatalha(ana, treinador("Bruno", chikoDeDanoMinimo())).executarAteFim();
 
     assertEquals(1, spray.getQuantidade());
     verify(registro, never()).registrarUsoItem(any(Item.class), any(PokeSal.class));
@@ -393,7 +393,7 @@ class BatalhaTest {
     terrenoNormal();
     Batalha batalha = novaBatalha(treinador("Ana", new CyndaSal(10)),
         treinador("Bruno", new ChikoSal(1)));
-    batalha.executarAteOFim();
+    batalha.executarAteFim();
 
     assertThrows(IllegalStateException.class, batalha::executarTurno);
     assertNotNull(batalha.getResultado());

@@ -28,6 +28,6 @@ public class ExecutorBatalhaPadrao implements ExecutorBatalha {
   @Override
   public ResultadoBatalha lutar(Jogador treinadorA, Jogador treinadorB) {
     return new Batalha(treinadorA, treinadorB, mecanica, servicoTerreno, repositorio, registro)
-        .executarAteOFim();
+        .executarAteFim();
   }
 }

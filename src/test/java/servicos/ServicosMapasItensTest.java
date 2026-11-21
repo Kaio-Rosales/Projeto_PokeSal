@@ -21,7 +21,7 @@ import model.pokesal.CyndaSal;
 import org.junit.jupiter.api.Test;
 
 /** Testes do mapa, dos itens fora de batalha, da cura e do nome do jogador. */
-class ServicosMapaEItensTest extends ServicosTestBase {
+class ServicosMapasItensTest extends ServicosTestBase {
 
   /** Para os testes de mapa, todo evento aleatório vira "achar uma poção" (inofensivo). */
   private void eventosSempreAcharPocao() {
@@ -42,7 +42,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   // ------------------------------------------------------------------ mapa
 
   @Test
-  void testEscolhaInvalidaNoMapaNaoCorrompeOEstado() {
+  void testEscolhaInvalidaNoMapaNaoCorrompeEstado() {
     // REGRESSÃO do BUG-02: antes, digitar 9 deixava escolha = 8 e o PRÓXIMO "avançar" lançava
     // ArrayIndexOutOfBoundsException. Agora o estado volta a -1 e o jogo segue normalmente.
     eventosSempreAcharPocao();
@@ -57,7 +57,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testPrimeiroAvancoMarcaAEntradaEConsultaOTerreno() {
+  void testPrimeiroAvancoMarcaEntradaConsultaTerreno() {
     eventosSempreAcharPocao();
     Servicos servicos = servicos(jogador(new ChikoSal()), "1\n");
 
@@ -69,7 +69,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testAvancarAndaPassoAPassoAteOFimDoCaminho() {
+  void testAvancarAndaPassoPassoAteFimDoCaminho() {
     eventosSempreAcharPocao();
     Servicos servicos = servicos(jogador(new ChikoSal()), "2\n");
 
@@ -84,7 +84,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testVilaUniversitariaCuraOTimeELimpaOMapa() {
+  void testVilaUniversitariaCuraTimeLimpaMapa() {
     ChikoSal ferido = new ChikoSal();
     ferido.setHpAtual(1);
     ferido.setStatus(StatusEfeito.QUEIMADO);
@@ -99,14 +99,14 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testRetornarSemTerAvancadoEOperacaoInvalida() {
+  void testRetornarSemTerAvancadoOperacaoInvalida() {
     servicos(jogador(), "").retornarMovimento();
 
     assertTrue(saida().contains("Operação inválida"));
   }
 
   @Test
-  void testRetornarRecuaUmaPosicaoEDepoisVoltaAoPontoDePartida() {
+  void testRetornarRecuaUmaPosicaoDepoisVoltaoPontoDePartida() {
     eventosSempreAcharPocao();
     Servicos servicos = servicos(jogador(new ChikoSal()), "1\n");
     servicos.avancarMovimento();   // [0][0]
@@ -136,7 +136,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   // ------------------------------------------------------------------ cura
 
   @Test
-  void testCuraTotalIgnoraPosicoesNulasEAvisaTimeVazio() {
+  void testCuraTotalIgnoraPosicoesNulasAvisaTimeVazio() {
     ChikoSal ferido = new ChikoSal();
     ferido.setHpAtual(3);
     Jogador comNulo = jogador(ferido, null);
@@ -162,7 +162,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testPocaoForaDeBatalhaCuraOPokeSalEscolhido() {
+  void testPocaoForaDeBatalhaCuraPokeSalEscolhido() {
     ChikoSal ferido = new ChikoSal();
     ferido.setHpAtual(5);
     Potion pocao = new Potion();
@@ -196,7 +196,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testPocaoSemTimeAvisaQueOTimeEstaVazio() {
+  void testPocaoSemTimeAvisaQueTimeEstaVazio() {
     Potion pocao = new Potion();
     pocao.setQuantidade(1);
     Jogador ana = jogador();
@@ -209,7 +209,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testPasseDeRetornoLimpaOMapa() {
+  void testPasseDeRetornoLimpaMapa() {
     eventosSempreAcharPocao();
     ReturnPass passe = new ReturnPass();
     passe.setQuantidade(1);
@@ -231,7 +231,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   // ------------------------------------------------------------------ nome e ciclo de vida
 
   @Test
-  void testTrocarONomeOuCancelar() {
+  void testTrocarNomeOuCancelar() {
     Jogador ana = jogador();
     servicos(ana, "n\n").verificarNome();
     assertEquals("Ana", ana.getNome());
@@ -241,7 +241,7 @@ class ServicosMapaEItensTest extends ServicosTestBase {
   }
 
   @Test
-  void testJogadorPodeSerTrocadoEEncerrarFechaOTeclado() {
+  void testJogadorPodeSerTrocadoEncerrarFechaTeclado() {
     Servicos servicos = servicos(jogador(), "");
     Jogador outro = jogador(new CyndaSal());
 

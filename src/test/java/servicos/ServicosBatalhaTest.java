@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 class ServicosBatalhaTest extends ServicosTestBase {
 
   @Test
-  void testFugirEncerraABatalhaSemDanoNemXp() {
+  void testFugirEncerraBatalhaSemDanoNemXp() {
     ChikoSal chiko = new ChikoSal();
     Servicos servicos = servicos(jogador(chiko), "3\n");
 
@@ -52,7 +52,7 @@ class ServicosBatalhaTest extends ServicosTestBase {
   }
 
   @Test
-  void testVitoriaQueFazOPokeSalSubirDeNivel() {
+  void testVitoriaQueFazPokeSalSubirDeNivel() {
     ChikoSal jogadorChiko = new ChikoSal(1);
     ChikoSal selvagem = new ChikoSal(2);
     selvagem.setHpAtual(1);
@@ -90,7 +90,7 @@ class ServicosBatalhaTest extends ServicosTestBase {
   }
 
   @Test
-  void testItemNaBatalhaConsomeUmaUnidadeEAvisaORegistro() {
+  void testItemNaBatalhaConsomeUmaUnidadeAvisaRegistro() {
     ChikoSal chiko = new ChikoSal(5);
     chiko.setHpAtual(10);
     Potion pocao = new Potion();
@@ -161,7 +161,7 @@ class ServicosBatalhaTest extends ServicosTestBase {
   }
 
   @Test
-  void testItemDeStatusRemoveOEfeitoDoPokeSal() {
+  void testItemDeStatusRemoveEfeitoDoPokeSal() {
     ChikoSal chiko = new ChikoSal(5);
     chiko.setStatus(StatusEfeito.QUEIMADO);
     Spray spray = new Spray();
@@ -179,7 +179,7 @@ class ServicosBatalhaTest extends ServicosTestBase {
   }
 
   @Test
-  void testOpcoesInvalidasNoMenuESaoReaskedAteUmaValida() {
+  void testOpcoesInvalidasNoMenuSaoReaskedAteUmaValida() {
     Servicos servicos = servicos(jogador(new ChikoSal()), "7\nabc\n3\n");
 
     servicos.batalha(new ChikoSal(1));
@@ -190,7 +190,7 @@ class ServicosBatalhaTest extends ServicosTestBase {
   }
 
   @Test
-  void testEscolhaDeAtaqueInvalidaEPedidaDeNovo() {
+  void testEscolhaDeAtaqueInvalidaPedidaDeNovo() {
     ChikoSal chiko = new ChikoSal(5);
     ChikoSal selvagem = new ChikoSal(1);
     selvagem.setAtk(0);
